@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "start": "bun run integra2mqtt.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "mqtt": "^5.14.1",
+    "satel-integra-integration-protocol": "https://github.com/sebo-b/satel-integra-integration-protocol.git"
+  }
+}
