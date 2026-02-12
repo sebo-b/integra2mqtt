@@ -9,7 +9,9 @@ const mqttURL = secrets.mqttURL;
 const mqttTopic="integra";
 
 const hassDiscoveryTopic = "homeassistant";
+const hassStatusTopic = "homeassistant/status";
 //const hassDiscoveryTopic = "hass/discovery";
+//const hassStatusTopic = "hass/status";
 
 /////////// END OF CONFIG
 
@@ -79,6 +81,7 @@ const zoneTopic = `${mqttTopic}/zone`;
 
 let mqttClient = mqtt.connect(mqttURL);
 mqttClient.subscribe(commandTopic);
+mqttClient.subscribe(hassStatusTopic);
 
 mqttClient.on("message", (topic, message) => {
     if (topic == commandTopic) {
@@ -96,6 +99,10 @@ mqttClient.on("message", (topic, message) => {
                 newMessageArrived();
                 break;
         }
+    }
+    else if (topic == hassStatusTopic && message.toString().toLowerCase() == "online") {
+	    messages.push(Messages.RunHADiscovery);
+	    newMessageArrived();
     }
 });
 
@@ -208,7 +215,7 @@ async function _homeAssistantDiscovery(zones) {
 
     if (!hassDiscoveryTopic)
         return;
-    
+
     console.log("starting HA discovery");
     for (let z of zones) {
         
