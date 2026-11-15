@@ -7,6 +7,12 @@ user code to the panel.
 
 No dependencies besides `mqtt`. Runs on [Bun](https://bun.sh).
 
+**Scope.** The purpose is to use the INTEGRA's detectors (PIRs, contacts) as motion/occupancy
+sensors for home automation, plus the crucial monitoring around them: partition armed/alarm
+state, service mode and troubles. It is deliberately limited and is not meant to be a full
+SATEL integration (no arming, outputs, users, event log or configuration). The `satel/`
+protocol layer is built so those could be added, see [Adding a command](#adding-a-command).
+
 ## Setup
 
 1. On the panel, enable the integration protocol on the ETHM module (DLOADX: ETHM-1 →

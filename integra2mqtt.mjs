@@ -236,13 +236,18 @@ async function session() {
 }
 
 // Every failure (network, DNS, timeout, bug) ends the session; we go offline and reconnect.
-for (;;) {
-  try {
-    await session();
-  } catch (e) {
-    console.error(new Date().toISOString(), "panel:", e.message);
+// No top-level await: PM2's Bun container loads the script with require().
+async function main() {
+  for (;;) {
+    try {
+      await session();
+    } catch (e) {
+      console.error(new Date().toISOString(), "panel:", e.message);
+    }
+    setOnline(false);
+    satel.close();
+    await sleep(cfg.retryMs);
   }
-  setOnline(false);
-  satel.close();
-  await sleep(cfg.retryMs);
 }
+
+main();
