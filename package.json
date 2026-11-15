@@ -1,12 +1,15 @@
 {
+  "name": "integra2mqtt",
+  "description": "SATEL INTEGRA -> MQTT bridge with Home Assistant discovery (monitoring only)",
+  "type": "module",
   "scripts": {
-    "start": "bun run integra2mqtt.js"
+    "start": "bun integra2mqtt.mjs",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "mqtt": "^5.14.1"
   },
   "devDependencies": {
     "@types/bun": "latest"
-  },
-  "dependencies": {
-    "mqtt": "^5.14.1",
-    "satel-integra-integration-protocol": "https://github.com/sebo-b/satel-integra-integration-protocol.git"
   }
 }
