@@ -39,6 +39,15 @@ published. Placeholder zones (no detector) are skipped. All topics are retained.
 | `integra/partition/NN`   | `{partition_number, name, state, armed, entry_time, exit_time, exit_time_short, alarm, fire_alarm}`; `state` is `disarmed` / `arming` / `pending` / `armed` / `triggered` | `sensor.integra_partition_NN`                |
 | `integra/panel`          | `{service_mode, troubles, troubles_memory, trouble_list, model, firmware, module_firmware}`                     | `binary_sensor.integra_service_mode`, `binary_sensor.integra_troubles`, `binary_sensor.integra_troubles_memory` (diagnostic) |
 
+Zone and partition names are read once at startup (about 200 requests, ~40 s on an ETHM-1
+Plus), not on reconnects. Commands on `integra/cmd`:
+
+| Payload            | Effect                                             |
+| ------------------ | -------------------------------------------------- |
+| `refresh_names`    | re-read names, republish discovery and all states  |
+| `run_ha_discovery` | republish discovery                                |
+| `read_zone_states` | re-read and republish all states                   |
+
 `trouble_list` decodes trouble parts 1 and 4: system troubles (AC, BATT, outputs, RTC, ...),
 technical zones, and expanders/keypads with AC/battery/communication/tamper problems.
 

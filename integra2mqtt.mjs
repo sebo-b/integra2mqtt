@@ -188,6 +188,38 @@ const TRACKED = [
   Cmd.TROUBLES_4,
 ];
 
+// Pending work, set at startup and by `<topic>/cmd` messages. Names (~200 requests) are read only
+// at startup or on refresh_names, not on every reconnect.
+const todo = { names: true, discovery: false, fullRead: true };
+const COMMANDS = { refresh_names: "names", run_ha_discovery: "discovery", read_zone_states: "fullRead" };
+client.subscribe(`${cfg.topic}/cmd`);
+client.on("message", (_, msg) => {
+  const job = COMMANDS[msg.toString().trim().toLowerCase()];
+  if (job) todo[job] = true;
+});
+
+async function step(maxZones) {
+  if (todo.names) {
+    zones = await readNames(DeviceType.ZONE, maxZones);
+    partitions = await readNames(DeviceType.PARTITION, 32);
+    console.log(`${zones.size} zones, ${partitions.size} partitions`);
+    Object.assign(todo, { names: false, discovery: true, fullRead: true });
+  }
+  if (todo.discovery) {
+    todo.discovery = false;
+    discover();
+  }
+  const changed = await satel.exec(S.readNewData());
+  const full = todo.fullRead;
+  for (const code of TRACKED) if (full || changed.has(code)) await refresh(code);
+  if (full) {
+    todo.fullRead = false;
+    for (const [n, z] of zones) publishZone(n, z);
+    for (const [n, p] of partitions) publishPartition(n, p);
+    publishPanel();
+  }
+}
+
 async function session() {
   const integra = await satel.exec(S.readIntegraVersion());
   const module = await satel.exec(S.readModuleVersion());
@@ -195,22 +227,11 @@ async function session() {
   device = { model: integra.model, firmware: integra.version, module_firmware: module.version };
   console.log(`connected: ${integra.model} ${integra.version}, module ${module.version}`);
 
-  zones = await readNames(DeviceType.ZONE, integra.zones);
-  partitions = await readNames(DeviceType.PARTITION, 32);
-  console.log(`${zones.size} zones, ${partitions.size} partitions`);
-  discover();
-
-  // full read once (publishes everything), then only what the panel reports as changed
-  for (const code of TRACKED) await refresh(code);
-  for (const [n, z] of zones) publishZone(n, z);
-  for (const [n, p] of partitions) publishPartition(n, p);
-  publishPanel();
-  setOnline(true);
-
+  todo.fullRead = true; // state may have changed while disconnected
   for (;;) {
+    await step(integra.zones);
+    setOnline(true);
     await sleep(cfg.pollMs);
-    const changed = await satel.exec(S.readNewData());
-    for (const code of TRACKED) if (changed.has(code)) await refresh(code);
   }
 }
 
